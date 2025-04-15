@@ -1,6 +1,5 @@
 import requests
 import time
-import socket
 
 BOT_TOKEN = "7916172515:AAF1e1Nj8K_F8Xr2LGQyLTKBlYTn9ZlOrIU"
 CHAT_ID = "5197540151"
@@ -9,20 +8,10 @@ URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
 offset = None
 
 def send_message(text):
-    print(f"📤 Gửi tin nhắn về Telegram: {text}")
+    print(f"📤 Gửi lại: {text}")
     requests.post(f"{URL}/sendMessage", data={"chat_id": CHAT_ID, "text": text})
 
-def get_local_ip():
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        ip = s.getsockname()[0]
-        s.close()
-        return ip
-    except:
-        return "Không lấy được IP"
-
-print("🤖 Bot đang chạy...")
+print("🤖 Bot đang lặp lại tin nhắn...")
 
 while True:
     try:
@@ -33,18 +22,9 @@ while True:
             for update in data["result"]:
                 offset = update["update_id"] + 1
                 message = update.get("message", {})
-                text = message.get("text", "").strip().lower()
-                print(f"📩 Nhận tin nhắn: {text}")
-
-                if text == "ip":
-                    ip = get_local_ip()
-                    send_message(f"📶 IP local của bạn là: {ip}")
-
-                elif text == "hi" or text == "hello":
-                    send_message("👋 Xin chào! Gửi 'ip' để lấy IP local.")
-
-                else:
-                    send_message("❓ Không hiểu lệnh. Gửi 'ip' để lấy IP.")
+                text = message.get("text", "").strip()
+                print(f"📩 Nhận: {text}")
+                send_message(text)
 
         time.sleep(1)
 
