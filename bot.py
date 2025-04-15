@@ -1,40 +1,61 @@
 import requests
+import subprocess
+import json
+import time
 
-# Thay đổi BOT_TOKEN và CHAT_ID của bạn tại đây
-BOT_TOKEN = "7916172515:AAF1e1Nj8K_F8Xr2LGQyLTKBlYTn9ZlOrIU"
-CHAT_ID = "5197540151"
+# Token và Chat ID của bạn
+BOT_TOKEN = '7661043177:AAEL1xO9C1O4vMnr705gZvPPRMh5JN26VHk'
+CHAT_ID = '5197540151'  # Thay bằng chat_id của bạn
+
+# URL của API Telegram
 URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
-# Đảm bảo có một offset hợp lệ, nếu không có offset thì để là 0
-offset = 0
+# Hàm gửi tin nhắn đến bot Telegram
+def send_message(text):
+    payload = {'chat_id': CHAT_ID, 'text': text}
+    requests.post(f"{URL}/sendMessage", data=payload)
 
-# Gửi yêu cầu GET để nhận cập nhật
-res = requests.get(f"{URL}/getUpdates", params={"offset": offset, "timeout": 10})
+# Hàm lấy cập nhật tin nhắn từ bot
+def get_updates(offset=None):
+    url = f"{URL}/getUpdates?timeout=100"
+    if offset:
+        url += f"&offset={offset}"
+    response = requests.get(url)
+    return response.json()
 
-# Kiểm tra mã trạng thái HTTP
-print(f"HTTP Status Code: {res.status_code}")
+# Hàm xử lý lệnh từ Telegram
+def process_command(command):
+    try:
+        # Thực thi lệnh trên Termux
+        result = subprocess.run(command, shell=True, capture_output=True, text=True)
+        # Trả về kết quả
+        return result.stdout if result.stdout else result.stderr
+    except Exception as e:
+        return str(e)
 
-# Kiểm tra nếu mã trạng thái là 200 (thành công)
-if res.status_code == 200:
-    # In ra toàn bộ nội dung phản hồi
-    print("Response Text: ")
-    print(res.text)
+# Hàm kiểm tra tin nhắn và gửi phản hồi
+def main():
+    offset = None
+    while True:
+        updates = get_updates(offset)
+        if updates['result']:
+            for update in updates['result']:
+                message = update['message']
+                chat_id = message['chat']['id']
+                text = message.get('text', '')
+                update_id = update['update_id']
+                
+                if text.lower() == "bot đang chạy":
+                    send_message("Bot Termux đang chạy!")
+                elif text.lower().startswith("run:"):
+                    command = text[5:].strip()  # Lấy lệnh sau "run:"
+                    send_message(f"Đang chạy lệnh: {command}")
+                    output = process_command(command)
+                    send_message(f"Kết quả lệnh:\n{output}")
+                
+                offset = update_id + 1  # Lấy cập nhật tiếp theo
 
-    # Chuyển đổi phản hồi thành JSON để dễ xử lý
-    data = res.json()
+        time.sleep(1)
 
-    # Kiểm tra xem dữ liệu trả về có hợp lệ không
-    if data.get("ok"):
-        print("Dữ liệu trả về hợp lệ:")
-        print(data)  # In ra toàn bộ dữ liệu nhận được
-        if data.get("result"):
-            print("Tin nhắn mới:")
-            for update in data["result"]:
-                print(f"Update ID: {update['update_id']}")
-                print(f"Message: {update.get('message')}")
-        else:
-            print("Không có tin nhắn mới.")
-    else:
-        print("Lỗi trong phản hồi từ Telegram.")
-else:
-    print(f"Lỗi khi gửi yêu cầu, mã trạng thái: {res.status_code}")
+if __name__ == '__main__':
+    main()
