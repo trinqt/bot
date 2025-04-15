@@ -8,10 +8,11 @@ URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
 offset = None
 
 def send_message(text):
-    print(f"📤 Gửi lại: {text}")
+    print(f"📤 Gửi tin nhắn: {text}")
     requests.post(f"{URL}/sendMessage", data={"chat_id": CHAT_ID, "text": text})
 
-print("🤖 Bot đang lặp lại tin nhắn...")
+# Gửi thông báo bot đang chạy
+send_message("🤖 Bot đang chạy...")
 
 while True:
     try:
@@ -23,8 +24,8 @@ while True:
                 offset = update["update_id"] + 1
                 message = update.get("message", {})
                 text = message.get("text", "").strip()
-                print(f"📩 Nhận: {text}")
-                send_message(text)
+                print(f"📩 Nhận tin nhắn: {text}")
+                send_message(f"Bot đã nhận tin nhắn: {text}")
 
         time.sleep(1)
 
