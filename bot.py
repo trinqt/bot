@@ -49,9 +49,9 @@ def main():
                     if text.lower() == "bot đang chạy":
                         send_message("Bot Termux đang chạy!")
                     
-                    # Nếu tin nhắn bắt đầu bằng "run:" thì sẽ chạy lệnh
-                    elif text.lower().startswith("run:"):
-                        command = text[5:].strip()  # Lấy lệnh sau "run:"
+                    # Nếu tin nhắn bắt đầu bằng "!" thì sẽ chạy lệnh
+                    elif text.lower().startswith("!"):
+                        command = text[1:].strip()  # Lấy lệnh sau "!"
                         send_message(f"Đang chạy lệnh: {command}")
                         output = process_command(command)  # Thực thi lệnh
                         send_message(f"Kết quả lệnh:\n{output}")
