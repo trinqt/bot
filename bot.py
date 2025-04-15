@@ -16,16 +16,24 @@ send_message("🤖 Bot đang chạy...")
 
 while True:
     try:
+        # Lấy các bản cập nhật (updates) từ Telegram
         res = requests.get(f"{URL}/getUpdates", params={"offset": offset, "timeout": 10})
+        
+        # Kiểm tra dữ liệu nhận được
         data = res.json()
+        print(f"📊 Dữ liệu nhận được: {data}")
 
         if data.get("ok") and data.get("result"):
             for update in data["result"]:
-                offset = update["update_id"] + 1
+                offset = update["update_id"] + 1  # Cập nhật offset để lấy các bản cập nhật tiếp theo
                 message = update.get("message", {})
-                text = message.get("text", "").strip()
+                text = message.get("text", "").strip()  # Lấy tin nhắn
                 print(f"📩 Nhận tin nhắn: {text}")
-                send_message(f"Bot đã nhận tin nhắn: {text}")
+                
+                if text:  # Nếu có tin nhắn
+                    send_message(f"Bot đã nhận tin nhắn: {text}")
+                else:
+                    send_message("❓ Không có tin nhắn nào!")
 
         time.sleep(1)
 
