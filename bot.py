@@ -1,45 +1,65 @@
 import requests
-import time
 import subprocess
+import time
+import socket
 
 BOT_TOKEN = "7916172515:AAF1e1Nj8K_F8Xr2LGQyLTKBlYTn9ZlOrIU"
 CHAT_ID = "5197540151"
-
 API_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
-
-def get_updates(offset=None):
-    url = f"{API_URL}/getUpdates"
-    params = {"timeout": 30, "offset": offset}
-    response = requests.get(url, params=params)
-    return response.json()
-
-def send_message(text):
-    url = f"{API_URL}/sendMessage"
-    data = {"chat_id": CHAT_ID, "text": text}
-    requests.post(url, data=data)
+last_update_id = None
 
 def get_local_ip():
     try:
-        result = subprocess.check_output("ip addr show wlan0", shell=True).decode()
-        for line in result.split("\n"):
-            if "inet " in line:
-                return line.strip().split(" ")[1].split("/")[0]
-        return "Không tìm thấy IP"
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
     except Exception as e:
-        return f"Lỗi lấy IP: {e}"
+        return f"Error getting IP: {e}"
 
-def execute_command(cmd):
+def get_updates():
+    global last_update_id
+    params = {"timeout": 100, "offset": last_update_id}
+    response = requests.get(f"{API_URL}/getUpdates", params=params)
+    return response.json()
+
+def send_message(text):
+    requests.post(f"{API_URL}/sendMessage", data={"chat_id": CHAT_ID, "text": text})
+
+def run_command(command):
     try:
-        result = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT).decode()
-        return result if result.strip() else "(Không có output)"
+        output = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT, text=True, timeout=10)
     except subprocess.CalledProcessError as e:
-        return f"Lỗi:\n{e.output.decode()}"
+        output = e.output
+    except Exception as e:
+        output = str(e)
+    return output.strip()
 
 def main():
-    last_update_id = None
-    send_message("🤖 Bot Termux đã khởi động!")
+    global last_update_id
     while True:
-        updates = get_updates(last_update_id)
-        if updates.get("ok"):
-            for update in updates["result"]:
-                last_update_id = update["update_id"] +_
+        updates = get_updates()
+        for update in updates.get("result", []):
+            last_update_id = update["update_id"] + 1
+            message = update.get("message", {})
+            text = message.get("text", "")
+            sender = message.get("chat", {}).get("id", "")
+
+            if str(sender) != CHAT_ID:
+                continue  # Bỏ qua nếu không phải tin nhắn từ bạn
+
+            if text.lower() == "ip":
+                ip = get_local_ip()
+                send_message(f"📶 Local IP: {ip}")
+            else:
+                output = run_command(text)
+                if output:
+                    send_message(f"📥 Kết quả:\n{output}")
+                else:
+                    send_message("❌ Không có đầu ra.")
+
+        time.sleep(1)
+
+if __name__ == "__main__":
+    main()
