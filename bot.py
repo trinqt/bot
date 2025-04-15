@@ -1,61 +1,12 @@
 import requests
-import subprocess
-import json
-import time
 
-# Token và Chat ID của bạn
 BOT_TOKEN = '7661043177:AAEL1xO9C1O4vMnr705gZvPPRMh5JN26VHk'
-CHAT_ID = '5197540151'  # Thay bằng chat_id của bạn
-
-# URL của API Telegram
 URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
-# Hàm gửi tin nhắn đến bot Telegram
-def send_message(text):
-    payload = {'chat_id': CHAT_ID, 'text': text}
-    requests.post(f"{URL}/sendMessage", data=payload)
-
 # Hàm lấy cập nhật tin nhắn từ bot
-def get_updates(offset=None):
-    url = f"{URL}/getUpdates?timeout=100"
-    if offset:
-        url += f"&offset={offset}"
-    response = requests.get(url)
+def get_updates():
+    response = requests.get(f"{URL}/getUpdates")
+    print(response.json())  # In toàn bộ phản hồi để xem tin nhắn
     return response.json()
 
-# Hàm xử lý lệnh từ Telegram
-def process_command(command):
-    try:
-        # Thực thi lệnh trên Termux
-        result = subprocess.run(command, shell=True, capture_output=True, text=True)
-        # Trả về kết quả
-        return result.stdout if result.stdout else result.stderr
-    except Exception as e:
-        return str(e)
-
-# Hàm kiểm tra tin nhắn và gửi phản hồi
-def main():
-    offset = None
-    while True:
-        updates = get_updates(offset)
-        if updates['result']:
-            for update in updates['result']:
-                message = update['message']
-                chat_id = message['chat']['id']
-                text = message.get('text', '')
-                update_id = update['update_id']
-                
-                if text.lower() == "bot đang chạy":
-                    send_message("Bot Termux đang chạy!")
-                elif text.lower().startswith("run:"):
-                    command = text[5:].strip()  # Lấy lệnh sau "run:"
-                    send_message(f"Đang chạy lệnh: {command}")
-                    output = process_command(command)
-                    send_message(f"Kết quả lệnh:\n{output}")
-                
-                offset = update_id + 1  # Lấy cập nhật tiếp theo
-
-        time.sleep(1)
-
-if __name__ == '__main__':
-    main()
+get_updates()
