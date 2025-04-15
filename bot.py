@@ -2,7 +2,7 @@ import requests
 import subprocess
 import time
 
-# Token và Chat ID của bạn
+# Thông tin bot
 BOT_TOKEN = '7661043177:AAEL1xO9C1O4vMnr705gZvPPRMh5JN26VHk'
 CHAT_ID = '5197540151'  # Thay bằng chat_id của bạn
 URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
@@ -20,7 +20,7 @@ def get_updates(offset=None):
     response = requests.get(url)
     return response.json()
 
-# Hàm xử lý lệnh từ Telegram
+# Hàm xử lý lệnh từ Telegram và thực thi trên Termux
 def process_command(command):
     try:
         # Thực thi lệnh trên Termux
