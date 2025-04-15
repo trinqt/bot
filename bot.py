@@ -1,21 +1,14 @@
-def main():
-    last_update_id = None
-    send_message("🤖 Bot Termux đã khởi động!")
-    print("Bot đang chạy...")  # In thông báo debug ra màn hình
-    while True:
-        updates = get_updates(last_update_id)
-        if updates.get("ok"):
-            for update in updates["result"]:
-                last_update_id = update["update_id"] + 1
-                message = update.get("message", {})
-                text = message.get("text", "")
-                if text:
-                    if text.strip().lower() == "ip":
-                        ip = get_local_ip()
-                        send_message(f"📶 IP local: {ip}")
-                        print(f"Đã gửi IP: {ip}")  # In ra terminal
-                    else:
-                        output = execute_command(text)
-                        send_message(f"💻 Output:\n{output}")
-                        print(f"Đã gửi output: {output}")  # In ra terminal
-        time.sleep(1)
+import requests
+
+BOT_TOKEN = "7916172515:AAF1e1Nj8K_F8Xr2LGQyLTKBlYTn9ZlOrIU"
+CHAT_ID = "5197540151"
+API_URL = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+
+message = "Hello, this is a test message from the bot!"
+
+response = requests.post(API_URL, data={"chat_id": CHAT_ID, "text": message})
+
+if response.status_code == 200:
+    print("Message sent successfully!")
+else:
+    print("Failed to send message!")
