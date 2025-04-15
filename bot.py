@@ -1,64 +1,53 @@
-import os
 import requests
 import time
+import socket
 
-BOT_TOKEN = "7916172515:AAF1e1Nj8K_F8Xr2LGQyLTKBlYTn9ZlOrIU"  # Thay bằng token của bạn
-CHAT_ID = "5197540151"  # Thay bằng chat ID của bạn
-API_URL = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+BOT_TOKEN = "7916172515:AAF1e1Nj8K_F8Xr2LGQyLTKBlYTn9ZlOrIU"
+CHAT_ID = "5197540151"
+URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
-# Hàm gửi tin nhắn tới Telegram
+offset = None
+
 def send_message(text):
-    response = requests.post(API_URL, data={"chat_id": CHAT_ID, "text": text})
-    if response.status_code != 200:
-        print(f"Error sending message: {response.status_code}")
-    else:
-        print("Message sent successfully!")
+    print(f"📤 Gửi tin nhắn về Telegram: {text}")
+    requests.post(f"{URL}/sendMessage", data={"chat_id": CHAT_ID, "text": text})
 
-# Lấy địa chỉ IP local của thiết bị
 def get_local_ip():
     try:
-        ip = os.popen('ip addr show wlan0').read().split('inet ')[1].split('/')[0]
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
         return ip
-    except IndexError:
-        return "Không thể lấy IP!"
+    except:
+        return "Không lấy được IP"
 
-# Thực thi lệnh hệ thống
-def execute_command(command):
+print("🤖 Bot đang chạy...")
+
+while True:
     try:
-        result = os.popen(command).read()
-        return result if result else "Không có kết quả!"
-    except Exception as e:
-        return f"Lỗi khi thực thi lệnh: {e}"
+        res = requests.get(f"{URL}/getUpdates", params={"offset": offset, "timeout": 10})
+        data = res.json()
 
-# Hàm chính để kiểm tra và gửi tin nhắn
-def main():
-    last_update_id = None
-    send_message("🤖 Bot Termux đã khởi động!")  # Gửi thông báo khi bot khởi động
-    print("Bot đang chạy...")  # In ra màn hình để biết bot đang chạy
-
-    while True:
-        # Lấy cập nhật tin nhắn từ bot
-        updates = requests.get(f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates?offset={last_update_id}").json()
-        
-        if updates.get("ok"):
-            for update in updates["result"]:
-                last_update_id = update["update_id"] + 1  # Cập nhật ID tin nhắn mới nhất
+        if data.get("ok") and data.get("result"):
+            for update in data["result"]:
+                offset = update["update_id"] + 1
                 message = update.get("message", {})
-                text = message.get("text", "")
-                
-                if text:
-                    print(f"Nhận lệnh: {text}")  # In ra lệnh đã nhận từ Telegram
+                text = message.get("text", "").strip().lower()
+                print(f"📩 Nhận tin nhắn: {text}")
 
-                    if text.strip().lower() == "ip":
-                        # Gửi địa chỉ IP local
-                        ip = get_local_ip()
-                        send_message(f"📶 IP local của bạn là: {ip}")
-                    else:
-                        # Thực thi lệnh hệ thống
-                        output = execute_command(text)
-                        send_message(f"💻 Output:\n{output}")
-        
-        time.sleep(1)  # Dừng 1 giây trước khi kiểm tra lại
+                if text == "ip":
+                    ip = get_local_ip()
+                    send_message(f"📶 IP local của bạn là: {ip}")
 
-if __name__ == "__main__":
-    main()
+                elif text == "hi" or text == "hello":
+                    send_message("👋 Xin chào! Gửi 'ip' để lấy IP local.")
+
+                else:
+                    send_message("❓ Không hiểu lệnh. Gửi 'ip' để lấy IP.")
+
+        time.sleep(1)
+
+    except Exception as e:
+        print(f"❌ Lỗi: {e}")
+        time.sleep(5)
