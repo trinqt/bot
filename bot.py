@@ -44,12 +44,16 @@ def main():
                     update_id = update['update_id']
 
                     print(f"Received message: {text}")  # In ra tin nhắn nhận được để kiểm tra
+                    
+                    # Kiểm tra nếu tin nhắn là "bot đang chạy"
                     if text.lower() == "bot đang chạy":
                         send_message("Bot Termux đang chạy!")
+                    
+                    # Nếu tin nhắn bắt đầu bằng "run:" thì sẽ chạy lệnh
                     elif text.lower().startswith("run:"):
                         command = text[5:].strip()  # Lấy lệnh sau "run:"
                         send_message(f"Đang chạy lệnh: {command}")
-                        output = process_command(command)
+                        output = process_command(command)  # Thực thi lệnh
                         send_message(f"Kết quả lệnh:\n{output}")
                     
                     offset = update_id + 1  # Lấy cập nhật tiếp theo
